@@ -1,11 +1,15 @@
 'use strict'
+const Heap = require('heap')
 
 module.exports = (logSources, printer) => {
-  let nextLogs = logSources.map((logSource, i) => ({idx: i,  log: logSource.pop()}))
-  while(nextLogs.every(log => log.log !== false)){
-    let next = nextLogs.slice().sort((a, b) => a.log.date - b.log.date)[0]
-    printer.print(next.log)
-    nextLogs[next.idx] = {idx: next.idx, log: logSources[next.idx].pop()}
+  let logHeap = new Heap((a, b) => a.log.date - b.log.date)
+  logSources.forEach((log, i) => logHeap.push({sourceIndex: i, log: log.pop()}))
+
+  while(!logHeap.empty()){
+    let toPrint = logHeap.pop()
+    printer.print(toPrint.log)
+    let next = logSources[toPrint.sourceIndex].pop()
+    next && logHeap.push({sourceIndex: toPrint.sourceIndex, log: next})
   }
 
   printer.done()
